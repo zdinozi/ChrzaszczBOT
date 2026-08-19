@@ -1,1 +1,23 @@
+# Secrets
 token.txt
+
+# IDE settings
+.idea/
+.vscode/
+
+# Temporary files and downloaded archives
+temp/
+
+# Python-generated files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Operating-system files
+.DS_Store
