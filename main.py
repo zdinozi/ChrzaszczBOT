@@ -68,7 +68,7 @@ def build_embeds(deals: list[Deal]) -> list[discord.Embed]:
             colour=discord.Colour.orange(),
         )
         if deal.image_url:
-            embed.set_thumbnail(url=deal.image_url)
+            embed.set_image(url=deal.image_url)
         embed.set_footer(text="Pepper.pl • ranking Najgorętsze")
         embeds.append(embed)
     return embeds

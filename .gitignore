@@ -8,6 +8,9 @@ token.txt
 # Temporary files and downloaded archives
 temp/
 
+# Local documentation and private notes
+docs/
+
 # Python-generated files
 __pycache__/
 *.py[cod]

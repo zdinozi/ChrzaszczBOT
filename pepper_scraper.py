@@ -45,7 +45,9 @@ class _DealsParser(HTMLParser):
             self._deal["title"] = (attrs.get("title") or "").strip()
             self._deal["url"] = (attrs.get("href") or "").strip()
         elif tag == "img" and "thread-image" in classes:
-            self._deal["image_url"] = (attrs.get("src") or "").strip()
+            srcset = (attrs.get("srcset") or "").strip()
+            largest_src = srcset.split(",")[-1].strip().split(" ")[0] if srcset else ""
+            self._deal["image_url"] = largest_src or (attrs.get("src") or "").strip()
         elif "cept-vote-temp" in classes:
             self._capture = "temperature"
         elif "thread-price" in classes:

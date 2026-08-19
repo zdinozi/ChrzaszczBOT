@@ -5,7 +5,8 @@ from pepper_scraper import Deal, parse_deals
 
 HTML = """
 <article data-t="thread">
-  <img class="thread-image" src="https://example.test/image.jpg">
+  <img class="thread-image" src="https://example.test/image-small.jpg"
+       srcset="https://example.test/image-small.jpg 1x, https://example.test/image-large.jpg 2x">
   <button class="cept-vote-temp"><span>321°</span></button>
   <a data-t="threadLink" title="Testowa okazja" href="https://example.test/deal">link</a>
   <span class="thread-price">19,99 zł</span>
@@ -27,7 +28,7 @@ class ParseDealsTest(unittest.TestCase):
                     "https://example.test/deal",
                     "321°",
                     "19,99 zł",
-                    "https://example.test/image.jpg",
+                    "https://example.test/image-large.jpg",
                 )
             ],
         )
@@ -36,7 +37,7 @@ class ParseDealsTest(unittest.TestCase):
         self.assertEqual(parse_deals(HTML)[1].price, "")
 
     def test_reads_image_url(self) -> None:
-        self.assertEqual(parse_deals(HTML)[0].image_url, "https://example.test/image.jpg")
+        self.assertEqual(parse_deals(HTML)[0].image_url, "https://example.test/image-large.jpg")
 
 
 if __name__ == "__main__":
