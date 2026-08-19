@@ -1,0 +1,15 @@
+[Unit]
+Description=ChrzaszczBOT Discord
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ChrzaszczBOT
+EnvironmentFile=/etc/chrzaszczbot.env
+ExecStart=/opt/ChrzaszczBOT/.venv/bin/python /opt/ChrzaszczBOT/main.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

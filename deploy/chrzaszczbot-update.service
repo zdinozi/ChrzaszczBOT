@@ -1,0 +1,8 @@
+[Unit]
+Description=Aktualizacja ChrzaszczBOT z GitHuba
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flock --nonblock /run/chrzaszczbot-update.lock /usr/local/sbin/chrzaszczbot-update
