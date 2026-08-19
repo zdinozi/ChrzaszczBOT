@@ -21,6 +21,7 @@ class Deal:
     url: str
     temperature: str = ""
     price: str = ""
+    image_url: str = ""
 
 
 class _DealsParser(HTMLParser):
@@ -43,6 +44,8 @@ class _DealsParser(HTMLParser):
         if tag == "a" and attrs.get("data-t") == "threadLink":
             self._deal["title"] = (attrs.get("title") or "").strip()
             self._deal["url"] = (attrs.get("href") or "").strip()
+        elif tag == "img" and "thread-image" in classes:
+            self._deal["image_url"] = (attrs.get("src") or "").strip()
         elif "cept-vote-temp" in classes:
             self._capture = "temperature"
         elif "thread-price" in classes:
