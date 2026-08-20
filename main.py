@@ -13,7 +13,7 @@ from discord.ext import tasks
 from pepper_scraper import Deal, PepperScraperError, fetch_hottest_deals
 
 
-CHANNEL_NAME = os.getenv("DISCORD_CHANNEL", "main")
+CHANNEL_NAME = os.getenv("DISCORD_CHANNEL", "promocje")
 WARSAW = ZoneInfo("Europe/Warsaw")
 POST_TIME = dt.time(hour=18, minute=0, tzinfo=WARSAW)
 

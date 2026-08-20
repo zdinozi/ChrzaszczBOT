@@ -21,7 +21,7 @@ z ceną, temperaturą, linkiem i zdjęciem każdej okazji.
    python3 main.py
    ```
 
-Domyślnie bot publikuje na pierwszym znalezionym kanale tekstowym `main`.
+Domyślnie bot publikuje na pierwszym znalezionym kanale tekstowym `promocje`.
 Można to zmienić zmienną `DISCORD_CHANNEL` lub, dokładniej, ustawić
 `DISCORD_CHANNEL_ID` na numeryczne ID kanału.
 
