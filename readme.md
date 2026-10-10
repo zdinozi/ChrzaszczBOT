@@ -4,6 +4,9 @@ Bot Discord publikujący codziennie o 18:00 (czas `Europe/Warsaw`) 10 pierwszych
 ofert z rankingu [Pepper Najgorętsze](https://www.pepper.pl/najgoretsze), razem
 z ceną, temperaturą, linkiem i zdjęciem każdej okazji.
 
+Opis architektury, wdrożeń, kluczy SSH i codziennej obsługi:
+[PROJEKT.md](PROJEKT.md).
+
 ## Uruchomienie
 
 1. Zainstaluj Python 3.10 lub nowszy i zależności:
@@ -95,6 +98,15 @@ sudo bash deploy/install-auto-update.sh
 
 ### Dostęp GitHub Actions do serwera
 
+W **Settings → Secrets and variables → Actions → Variables** ustaw zmienne
+repozytorium (nie sekrety):
+
+| Nazwa | Wartość |
+| --- | --- |
+| `MIKRUS_HOST` | `wanda202.mikrus.xyz` |
+| `MIKRUS_USER` | `root` |
+| `MIKRUS_PORT` | `10202` |
+
 Workflow wymaga sekretu repozytorium `MIKRUS_DEPLOY_KEY` zawierającego osobny
 prywatny klucz SSH bez hasła. Dodaj go w **Settings → Secrets and variables →
 Actions**. Klucza prywatnego nie zapisuj w repozytorium.
@@ -108,7 +120,7 @@ restrict,command="/usr/local/sbin/chrzaszczbot-deploy" ssh-ed25519 KLUCZ_PUBLICZ
 Ten klucz może uruchamiać wyłącznie aktualizator; nie pozwala na interaktywną
 powłokę ani przekierowywanie portów. Skrypt ignoruje polecenie przesłane przez SSH.
 Plik `deploy/mikrus_known_hosts` zawiera przypięty publiczny klucz hosta.
-Przy zmianie serwera zaktualizuj host/port workflow i klucz hosta po jego
+Przy zmianie serwera zaktualizuj zmienne połączenia i klucz hosta po jego
 niezależnej weryfikacji.
 
 ### Diagnostyka i ręczne wdrożenie

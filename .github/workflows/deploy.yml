@@ -31,17 +31,23 @@ jobs:
       - name: Deploy over SSH
         env:
           DEPLOY_KEY: ${{ secrets.MIKRUS_DEPLOY_KEY }}
+          MIKRUS_HOST: ${{ vars.MIKRUS_HOST }}
+          MIKRUS_USER: ${{ vars.MIKRUS_USER }}
+          MIKRUS_PORT: ${{ vars.MIKRUS_PORT }}
         run: |
           set -euo pipefail
           test -n "$DEPLOY_KEY" || { echo 'Missing MIKRUS_DEPLOY_KEY secret'; exit 1; }
+          : "${MIKRUS_HOST:?Missing MIKRUS_HOST variable}"
+          : "${MIKRUS_USER:?Missing MIKRUS_USER variable}"
+          : "${MIKRUS_PORT:?Missing MIKRUS_PORT variable}"
           key_file="$(mktemp)"
           trap 'rm -f "$key_file"' EXIT
           chmod 600 "$key_file"
           printf '%s\n' "$DEPLOY_KEY" > "$key_file"
           unset DEPLOY_KEY
-          ssh -i "$key_file" -p 10202 \
+          ssh -i "$key_file" -p "$MIKRUS_PORT" -l "$MIKRUS_USER" \
             -o BatchMode=yes -o IdentitiesOnly=yes \
             -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
             -o StrictHostKeyChecking=yes \
             -o UserKnownHostsFile=deploy/mikrus_known_hosts \
-            root@wanda202.mikrus.xyz deploy
+            -- "$MIKRUS_HOST" deploy
