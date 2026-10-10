@@ -69,7 +69,8 @@ Nie wymaga konta Amazon w konfiguracji bota ani dodatkowych zależności.
 - `prime_games.py`: anonimowa sesja publicznej strony Amazon (cookies i CSRF),
   następnie zapytanie GraphQL o kolekcję `FREE_GAMES`. Każde żądanie ma timeout
   20 sekund. Cookies i token pozostają w pamięci, nie są zapisywane na dysk.
-- `main.py`: dwie sekcje, maksymalnie pięć kart na wiadomość i niezależne komunikaty błędów.
+- `main.py`: jedna wiadomość ze stronami po pięć kart, przyciskami Poprzednia/Następna
+  i niezależnymi komunikatami błędów. Nawigacja wygasa po pięciu minutach bezczynności.
 - `test_prime_games.py`, `test_free_games.py`: testy parsera, sesji, cache i publikacji.
   `tests/fixtures/prime_games.json` to publiczna odpowiedź katalogu z 10.10.2026,
   ograniczona do pól ofert; nie zawiera cookies, CSRF ani danych konta.

@@ -153,7 +153,58 @@ def build_game_embed(game: FreeGame) -> discord.Embed:
     return embed
 
 
-async def publish_free_games(channel: discord.abc.Messageable) -> None:
+class FreeGamesView(discord.ui.View):
+    def __init__(self, pages: list[tuple[str, list[discord.Embed]]], notices: list[str]):
+        super().__init__(timeout=300)
+        self.pages = pages
+        self.notices = notices
+        self.page = 0
+        self.message = None
+        self.lock = asyncio.Lock()
+        self.expired = False
+        self.update_buttons()
+
+    def update_buttons(self) -> None:
+        self.previous.disabled = self.expired or self.page == 0
+        self.next.disabled = self.expired or self.page == len(self.pages) - 1
+
+    def message_content(self) -> str:
+        heading, _ = self.pages[self.page]
+        hint = "Nawigacja wygasła — wywołaj ponownie /darmowegry." if self.expired else ""
+        return "\n".join(text for text in (
+            heading, f"**Strona {self.page + 1}/{len(self.pages)}**", *self.notices, hint,
+        ) if text)
+
+    async def move(self, interaction: discord.Interaction, offset: int) -> None:
+        async with self.lock:
+            if not self.expired:
+                self.page = max(0, min(len(self.pages) - 1, self.page + offset))
+            self.update_buttons()
+            await interaction.response.edit_message(
+                content=self.message_content(), embeds=self.pages[self.page][1], view=self,
+                allowed_mentions=discord.AllowedMentions.none(),
+            )
+
+    @discord.ui.button(label="Poprzednia", style=discord.ButtonStyle.secondary)
+    async def previous(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        await self.move(interaction, -1)
+
+    @discord.ui.button(label="Następna", style=discord.ButtonStyle.primary)
+    async def next(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        await self.move(interaction, 1)
+
+    async def on_timeout(self) -> None:
+        async with self.lock:
+            self.expired = True
+            self.update_buttons()
+            if self.message is not None:
+                try:
+                    await self.message.edit(content=self.message_content(), view=self)
+                except discord.HTTPException:
+                    logger.warning("Nie udało się wyłączyć nawigacji gier po wygaśnięciu")
+
+
+async def publish_free_games(channel: discord.Webhook) -> None:
     results = await asyncio.gather(
         epic_cache.get(fetch_free_games), prime_cache.get(fetch_prime_games),
         return_exceptions=True,
@@ -163,22 +214,32 @@ async def publish_free_games(channel: discord.abc.Messageable) -> None:
         ("Amazon Prime", "🎁 **Gry do odebrania w ramach Amazon Prime**\n"
          "Wymagana aktywna subskrypcja. Dostępność dla konta i regionu sprawdzisz na stronie oferty."),
     )
+    pages = []
+    notices = []
     for (source, heading), result in zip(providers, results):
         if isinstance(result, Exception):
             logger.error("Nie udało się pobrać gier: %s", source,
                          exc_info=(type(result), result, result.__traceback__))
-            await channel.send(f"⚠️ Nie udało się pobrać gier z {source}. Spróbuj ponownie później.")
+            notices.append(f"⚠️ Nie udało się pobrać gier z {source}. Spróbuj ponownie później.")
             continue
         if not result:
-            await channel.send(f"Obecnie brak aktywnych ofert do odebrania w {source}.")
+            notices.append(f"Obecnie brak aktywnych ofert do odebrania w {source}.")
             continue
         # Five bounded cards fit both the 10-embed and 6000-character limits.
         for offset in range(0, len(result), 5):
-            await channel.send(
-                content=heading if offset == 0 else None,
-                embeds=[build_game_embed(game) for game in result[offset:offset + 5]],
-                allowed_mentions=discord.AllowedMentions.none(),
-            )
+            pages.append((heading, [build_game_embed(game) for game in result[offset:offset + 5]]))
+    if not pages:
+        await channel.send("\n".join(notices))
+        return
+    if len(pages) == 1:
+        await channel.send(content="\n".join([pages[0][0], *notices]), embeds=pages[0][1],
+                           allowed_mentions=discord.AllowedMentions.none())
+        return
+    view = FreeGamesView(pages, notices)
+    view.message = await channel.send(
+        content=view.message_content(), embeds=pages[0][1], view=view, wait=True,
+        allowed_mentions=discord.AllowedMentions.none(),
+    )
 
 
 @command_tree.command(name="darmowegry", description="Pokaż gry do odebrania w Epic Games i z subskrypcją Amazon Prime")

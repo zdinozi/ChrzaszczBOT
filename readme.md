@@ -49,7 +49,10 @@ Amazon mogą wymagać aktualizacji modułu `prime_games.py`.
 Oba źródła pobierane są równolegle na żądanie komendy, z osobnym cache na 15 minut.
 Cache znika po restarcie; wygasłe oferty są filtrowane również przy odczycie cache.
 Awaria jednego źródła nie blokuje wyników drugiego. Błąd nie jest traktowany jako
-brak ofert ani zapisywany w cache. Wiadomości są dzielone na partie po pięć kart.
+brak ofert ani zapisywany w cache. Wyniki trafiają do jednej wiadomości, po pięć kart na stronę. Przyciski
+„Poprzednia” i „Następna” zmieniają stronę w tej samej wiadomości. Każdy może
+przeglądać wspólną listę. Po pięciu minutach bezczynności przyciski wygasają;
+ponowne wywołanie komendy otwiera nową listę.
 Bot musi być dodany do serwera z uprawnieniem `applications.commands`.
 Komenda jest synchronizowana bezpośrednio na każdym serwerze po starcie bota,
 dzięki czemu powinna pojawić się w Discordzie od razu.

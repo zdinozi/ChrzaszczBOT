@@ -47,7 +47,10 @@ class CommandTest(unittest.IsolatedAsyncioTestCase):
         with patch.object(main, "fetch_free_games", AsyncMock(return_value=[])), \
                 patch.object(main, "fetch_prime_games", AsyncMock(return_value=games)):
             await main.publish_free_games(self.channel)
-        batches = [c.kwargs["embeds"] for c in self.channel.send.call_args_list if "embeds" in c.kwargs]
+        self.channel.send.assert_awaited_once()
+        view = self.channel.send.call_args.kwargs["view"]
+        self.addCleanup(view.stop)
+        batches = [embeds for _, embeds in view.pages]
         self.assertEqual([len(b) for b in batches], [5, 5, 5, 1])
         for batch in batches:
             self.assertLessEqual(sum(len(e) for e in batch), 6000)
@@ -71,7 +74,7 @@ class CommandTest(unittest.IsolatedAsyncioTestCase):
                 self.channel.reset_mock()
                 await main.publish_free_games(self.channel)
                 calls = self.channel.send.call_args_list
-                self.assertEqual(len(calls), 2)
+                self.assertEqual(len(calls), 1)
                 self.assertEqual(sum("embeds" in c.kwargs for c in calls), 0 if failed == "both" else 1)
 
     async def test_command_defers_before_fetch(self):
@@ -80,3 +83,44 @@ class CommandTest(unittest.IsolatedAsyncioTestCase):
             await main.free_games_command.callback(interaction)
         interaction.response.defer.assert_awaited_once_with(thinking=True)
         publish.assert_awaited_once_with(interaction.followup)
+
+
+class PaginationTest(unittest.IsolatedAsyncioTestCase):
+    async def test_buttons_edit_same_message_and_boundaries(self):
+        pages = [("Epic", [main.build_game_embed(FreeGame("Epic game", "https://example.com", None))]),
+                 ("Prime", [main.build_game_embed(FreeGame("Prime game", "https://example.com", None))])]
+        view = main.FreeGamesView(pages, ["Informacja o źródle"])
+        self.addCleanup(view.stop)
+        interaction = AsyncMock()
+        self.assertTrue(view.previous.disabled)
+        self.assertFalse(view.next.disabled)
+        await view.next.callback(interaction)
+        self.assertEqual(view.page, 1)
+        self.assertTrue(view.next.disabled)
+        self.assertFalse(view.previous.disabled)
+        self.assertIn("Strona 2/2", interaction.response.edit_message.call_args.kwargs["content"])
+        self.assertIn("Informacja o źródle", interaction.response.edit_message.call_args.kwargs["content"])
+        self.assertEqual(interaction.response.edit_message.call_args.kwargs["embeds"], pages[1][1])
+        await view.next.callback(interaction)
+        self.assertEqual(view.page, 1)
+        await view.previous.callback(interaction)
+        self.assertEqual(view.page, 0)
+        interaction.followup.send.assert_not_called()
+        view.message = AsyncMock()
+        await view.on_timeout()
+        self.assertTrue(view.previous.disabled)
+        self.assertTrue(view.next.disabled)
+        self.assertIn("Nawigacja wygasła", view.message.edit.call_args.kwargs["content"])
+        await view.next.callback(interaction)
+        self.assertEqual(view.page, 0)
+
+    async def test_single_page_has_no_buttons(self):
+        channel = AsyncMock()
+        with patch.object(main, "epic_cache", GamesCache()), \
+                patch.object(main, "prime_cache", GamesCache()), \
+                patch.object(main, "fetch_free_games", AsyncMock(return_value=[])), \
+                patch.object(main, "fetch_prime_games", AsyncMock(return_value=[
+                    FreeGame("Game", "https://example.com", None)])):
+            await main.publish_free_games(channel)
+        channel.send.assert_awaited_once()
+        self.assertNotIn("view", channel.send.call_args.kwargs)
