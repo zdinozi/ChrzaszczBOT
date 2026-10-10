@@ -18,10 +18,23 @@ if [[ ! -f /etc/chrzaszczbot.env ]]; then
     exit 1
 fi
 
+for command in python3 git systemctl flock; do
+    if ! command -v "${command}" >/dev/null 2>&1; then
+        echo "Brak polecenia ${command}. Zainstaluj wymagania opisane w readme.md."
+        exit 1
+    fi
+done
+
+python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else "Wymagany Python 3.10 lub nowszy")'
+
+cd "${REPO_DIR}"
 if [[ ! -x "${REPO_DIR}/.venv/bin/python" ]]; then
-    echo "Brak środowiska Python w ${REPO_DIR}/.venv"
-    exit 1
+    python3 -m venv "${REPO_DIR}/.venv"
 fi
+"${REPO_DIR}/.venv/bin/python" -m pip install --disable-pip-version-check -r requirements.txt
+"${REPO_DIR}/.venv/bin/python" -m unittest -q
+"${REPO_DIR}/.venv/bin/python" -m py_compile main.py pepper_scraper.py
+chmod 0600 /etc/chrzaszczbot.env
 
 install -m 0644 "${REPO_DIR}/deploy/chrzaszczbot.service" /etc/systemd/system/chrzaszczbot.service
 install -m 0755 "${REPO_DIR}/deploy/chrzaszczbot-update.sh" /usr/local/sbin/chrzaszczbot-update
@@ -29,7 +42,8 @@ install -m 0644 "${REPO_DIR}/deploy/chrzaszczbot-update.service" /etc/systemd/sy
 install -m 0644 "${REPO_DIR}/deploy/chrzaszczbot-update.timer" /etc/systemd/system/chrzaszczbot-update.timer
 
 systemctl daemon-reload
-systemctl enable --now chrzaszczbot.service
+systemctl enable chrzaszczbot.service
+systemctl restart chrzaszczbot.service
 systemctl enable --now chrzaszczbot-update.timer
 
 echo "Bot i timer zostały uruchomione. Następna aktualizacja:"

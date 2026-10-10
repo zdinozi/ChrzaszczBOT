@@ -6,7 +6,7 @@ z ceną, temperaturą, linkiem i zdjęciem każdej okazji.
 
 ## Uruchomienie
 
-1. Zainstaluj Python 3.9 lub nowszy i zależności:
+1. Zainstaluj Python 3.10 lub nowszy i zależności:
 
    ```bash
    python3 -m pip install -r requirements.txt
@@ -37,8 +37,50 @@ Repozytorium zawiera timer `systemd`, który co 5 minut sprawdza gałąź `main`
 GitHubie. Nowa wersja jest instalowana i restartuje bota dopiero po pomyślnym
 zainstalowaniu zależności oraz przejściu testów.
 
-Po pobraniu projektu do `/opt/ChrzaszczBOT`, utworzeniu środowiska `.venv` oraz
-zapisaniu tokenu w `/etc/chrzaszczbot.env` uruchom na Mikrusie:
+### Pierwsza instalacja na Mikrusie 2.1
+
+Poniższe polecenia zakładają świeży Debian/Ubuntu z `systemd`, Pythonem 3.10
+lub nowszym i dostępem do repozytorium na GitHubie. Połącz się komendą SSH
+z panelu Mikrusa (użyj podanego tam portu):
+
+```bash
+ssh root@TWOJ_HOST -p TWOJ_PORT
+```
+
+Na serwerze zainstaluj wymagania i pobierz projekt:
+
+```bash
+apt-get update
+apt-get install -y git python3 python3-venv ca-certificates tzdata util-linux
+git clone --branch main https://github.com/zdinozi/ChrzaszczBOT.git /opt/ChrzaszczBOT
+```
+
+Jeśli repozytorium jest prywatne, najpierw skonfiguruj dostęp serwera do GitHuba
+(np. kluczem deploy key tylko do odczytu i adresem repozytorium SSH).
+Nie umieszczaj tokenu GitHuba w adresie repozytorium.
+
+Utwórz plik konfiguracji dostępny wyłącznie dla roota:
+
+```bash
+touch /etc/chrzaszczbot.env
+chmod 0600 /etc/chrzaszczbot.env
+nano /etc/chrzaszczbot.env
+```
+
+Wpisz poniższe wartości, zastępując placeholder tokenem bota z Discorda:
+
+```text
+DISCORD_TOKEN=WPISZ_TOKEN_BOTA
+DISCORD_CHANNEL=promocje
+```
+
+Przy ponownej instalacji zachowaj istniejące wartości konfiguracji.
+Token pozostaje poza repozytorium.
+Jeśli bot działa na starej maszynie, zatrzymaj tam usługę przed uruchomieniem
+nowej, aby uniknąć podwójnych publikacji.
+
+Uruchom instalator, który tworzy `.venv`, instaluje zależności, wykonuje testy
+i uruchamia lub restartuje bota oraz włącza timer aktualizacji:
 
 ```bash
 cd /opt/ChrzaszczBOT
