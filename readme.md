@@ -29,6 +29,10 @@ Można to zmienić zmienną `DISCORD_CHANNEL` lub, dokładniej, ustawić
 `DISCORD_CHANNEL_ID` na numeryczne ID kanału.
 
 Komenda `/promocje` publikuje ranking od razu i służy do ręcznego testowania.
+Komenda `/darmowegry` pokazuje aktualnie darmowe gry do odebrania w Epic Games Store
+dla Polski, z linkami i terminami zakończenia promocji. Pobiera dane bezpośrednio
+z katalogu Epic; pomija zapowiedzi, wygasłe promocje i gry stale darmowe.
+Nie wymaga klucza API. Oferty Epic są sprawdzane tylko na żądanie komendy.
 Bot musi być dodany do serwera z uprawnieniem `applications.commands`.
 Komenda jest synchronizowana bezpośrednio na każdym serwerze po starcie bota,
 dzięki czemu powinna pojawić się w Discordzie od razu.
