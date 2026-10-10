@@ -29,10 +29,27 @@ Można to zmienić zmienną `DISCORD_CHANNEL` lub, dokładniej, ustawić
 `DISCORD_CHANNEL_ID` na numeryczne ID kanału.
 
 Komenda `/promocje` publikuje ranking od razu i służy do ręcznego testowania.
-Komenda `/darmowegry` pokazuje aktualnie darmowe gry do odebrania w Epic Games Store
-dla Polski, z linkami i terminami zakończenia promocji. Pobiera dane bezpośrednio
-z katalogu Epic; pomija zapowiedzi, wygasłe promocje i gry stale darmowe.
-Nie wymaga klucza API. Oferty Epic są sprawdzane tylko na żądanie komendy.
+Komenda `/darmowegry` pokazuje gry aktualnie do odebrania w dwóch sekcjach:
+- **Epic Games Store** — promocje dla Polski, bez subskrypcji.
+- **Amazon Prime** — pełne gry wymagające aktywnej subskrypcji Prime,
+  z linkiem do odbioru w Amazon Luna i terminem zakończenia oferty.
+
+Bot pobiera dane bezpośrednio z katalogów Epic i Amazon. Pomija zapowiedzi,
+wygasłe oferty oraz dodatki; sekcja Prime nie obejmuje katalogu streamingu Luna.
+Platforma aktywacji jest wyświetlana, jeśli Amazon ją poda; brak terminu jest
+jawnie oznaczony. Dostępność Prime dla konkretnego konta i regionu należy
+sprawdzić na stronie oferty — język polski zapytania nie gwarantuje dostępności w Polsce.
+Bot nie loguje się na konto Amazon ani nie odbiera gier za użytkownika.
+
+Klucz API ani dodatkowa konfiguracja nie są potrzebne. Amazon wymaga anonimowej
+sesji (cookies i CSRF), tworzonej wyłącznie w pamięci na czas pobrania katalogu.
+Integracja używa wewnętrznego GraphQL publicznej strony, więc zmiany po stronie
+Amazon mogą wymagać aktualizacji modułu `prime_games.py`.
+
+Oba źródła pobierane są równolegle na żądanie komendy, z osobnym cache na 15 minut.
+Cache znika po restarcie; wygasłe oferty są filtrowane również przy odczycie cache.
+Awaria jednego źródła nie blokuje wyników drugiego. Błąd nie jest traktowany jako
+brak ofert ani zapisywany w cache. Wiadomości są dzielone na partie po pięć kart.
 Bot musi być dodany do serwera z uprawnieniem `applications.commands`.
 Komenda jest synchronizowana bezpośrednio na każdym serwerze po starcie bota,
 dzięki czemu powinna pojawić się w Discordzie od razu.

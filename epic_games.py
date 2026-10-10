@@ -3,10 +3,11 @@ from __future__ import annotations
 import asyncio
 import datetime as dt
 import json
-from dataclasses import dataclass
 from urllib.error import URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
+
+from free_games import FreeGame
 
 
 EPIC_URL = (
@@ -17,13 +18,6 @@ EPIC_URL = (
 
 class EpicGamesError(RuntimeError):
     pass
-
-
-@dataclass(frozen=True)
-class FreeGame:
-    title: str
-    url: str
-    ends_at: dt.datetime
 
 
 def parse_free_games(payload: dict, now: dt.datetime | None = None) -> list[FreeGame]:

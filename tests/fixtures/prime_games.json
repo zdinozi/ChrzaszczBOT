@@ -1,0 +1,264 @@
+{
+  "data": {
+    "games": {
+      "items": [
+        {
+          "id": "amzn1.pg.item.886d058d-6e68-4f53-8e58-3044de3e6bb4",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "WarBreeds",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-10-08T17:00:00Z",
+              "endTime": "2027-01-08T18:00:00Z"
+            }
+          ]
+        },
+        {
+          "id": "amzn1.pg.item.82e258e7-827e-46e0-8228-25e9720b48b4",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "Conarium",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-10-08T17:00:00Z",
+              "endTime": "2026-11-11T18:00:00Z"
+            }
+          ]
+        },
+        {
+          "id": "amzn1.pg.item.9d2ad65c-0963-4e2d-93e6-75ad2a4bfc87",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "Five Nights at Freddy's: Into the Pit",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-10-01T17:00:00Z",
+              "endTime": "2026-11-04T18:00:00Z"
+            }
+          ]
+        },
+        {
+          "id": "amzn1.pg.item.b095156c-1207-49f0-801a-75ac03b74def",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "DOOM",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-10-01T17:00:00Z",
+              "endTime": "2026-11-04T18:00:00Z"
+            }
+          ]
+        },
+        {
+          "id": "amzn1.pg.item.d7de294d-c66d-4445-824d-ec9292fa1acb",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "Hue",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-09-24T17:00:00Z",
+              "endTime": "2026-10-28T17:00:00Z"
+            }
+          ]
+        },
+        {
+          "id": "amzn1.pg.item.351cbaa9-ac70-4e47-93b6-1a4cb7dd38c8",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "High on Life",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-09-24T17:00:00Z",
+              "endTime": "2026-10-28T17:00:00Z"
+            }
+          ]
+        },
+        {
+          "id": "amzn1.pg.item.6cd3cd34-9ede-48df-bf9a-cc154ed97525",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "The Da Vinci Cryptex",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-09-24T17:00:00Z",
+              "endTime": "2026-10-28T17:00:00Z"
+            }
+          ]
+        },
+        {
+          "id": "amzn1.pg.item.2cf2cac0-6b4d-4b5e-9064-2005dad4ede7",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "RiMS Racing",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-09-17T17:00:00Z",
+              "endTime": "2026-10-21T17:00:00Z"
+            }
+          ]
+        },
+        {
+          "id": "amzn1.pg.item.11e467f2-b0e3-4a1e-9dee-4cd723e92ee9",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "Wall World 2",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-09-17T17:00:00Z",
+              "endTime": "2026-10-21T17:00:00Z"
+            }
+          ]
+        },
+        {
+          "id": "amzn1.pg.item.1c490f2e-c698-4077-94a6-6a69c98945e2",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "DOOM Eternal",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-09-17T17:00:00Z",
+              "endTime": "2026-10-21T17:00:00Z"
+            }
+          ]
+        },
+        {
+          "id": "amzn1.pg.item.fe9fbd08-590e-4d6d-9a94-f22f4548c09d",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "Botany Manor",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-09-10T17:00:00Z",
+              "endTime": "2026-10-14T17:00:00Z"
+            }
+          ]
+        },
+        {
+          "id": "amzn1.pg.item.db1d5024-9037-4d32-9543-37a9577e7d86",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "DOOM + DOOM II",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-09-10T17:00:00Z",
+              "endTime": "2026-10-14T17:00:00Z"
+            }
+          ]
+        },
+        {
+          "id": "amzn1.pg.item.2cb13abe-d709-4d5c-8d65-35bdc91d3b4d",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "Drop Duchy",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-09-10T17:00:00Z",
+              "endTime": "2026-10-14T17:00:00Z"
+            }
+          ]
+        },
+        {
+          "id": "amzn1.pg.item.ef222081-3e6c-4949-9e87-aaf2c27b6bc6",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "Havendock",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-08-27T17:00:00Z",
+              "endTime": "2026-10-28T17:00:00Z"
+            }
+          ]
+        },
+        {
+          "id": "amzn1.pg.item.35aae84a-f566-4890-8fd3-492318a39036",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "Weakless",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-07-30T17:00:00Z",
+              "endTime": "2026-10-28T17:00:00Z"
+            }
+          ]
+        },
+        {
+          "id": "amzn1.pg.item.ec074069-a977-4885-b5b0-6f972d17abb7",
+          "isFGWP": true,
+          "isTeaserCard": false,
+          "category": "FULL_GAME",
+          "assets": {
+            "title": "Zoria: Age of Shattering",
+            "redemptionPlatforms": null
+          },
+          "offers": [
+            {
+              "startTime": "2026-07-30T17:00:00Z",
+              "endTime": "2026-10-28T17:00:00Z"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

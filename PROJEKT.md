@@ -57,6 +57,33 @@ stronie Pepper może wymagać aktualizacji parsera.
 Katalog `docs/` jest ignorowany przez Git. Ten dokument znajduje się w katalogu
 głównym, aby można go było wersjonować razem z projektem.
 
+## Gry do odebrania: `/darmowegry`
+
+Komenda pobiera równolegle oferty Epic Games Store dla Polski oraz pełne gry
+w ramach Amazon Prime. Sekcja Prime wskazuje wymóg subskrypcji i linkuje do
+odbioru w Amazon Luna. Dostępność regionalną potwierdza użytkownik na stronie oferty.
+Nie wymaga konta Amazon w konfiguracji bota ani dodatkowych zależności.
+
+- `free_games.py`: wspólny model oferty i osobny cache każdego źródła na 15 minut.
+- `epic_games.py`: pobranie i parsowanie promocji Epic.
+- `prime_games.py`: anonimowa sesja publicznej strony Amazon (cookies i CSRF),
+  następnie zapytanie GraphQL o kolekcję `FREE_GAMES`. Każde żądanie ma timeout
+  20 sekund. Cookies i token pozostają w pamięci, nie są zapisywane na dysk.
+- `main.py`: dwie sekcje, maksymalnie pięć kart na wiadomość i niezależne komunikaty błędów.
+- `test_prime_games.py`, `test_free_games.py`: testy parsera, sesji, cache i publikacji.
+  `tests/fixtures/prime_games.json` to publiczna odpowiedź katalogu z 10.10.2026,
+  ograniczona do pól ofert; nie zawiera cookies, CSRF ani danych konta.
+
+API Amazon jest wewnętrznym API strony i może zmienić format. Błędy GraphQL,
+nieprawidłowa struktura lub osiągnięcie limitu 100 rekordów są sygnalizowane jako
+błąd źródła, aby nie prezentować potencjalnie niepełnej listy jako kompletnej.
+Przy osiągnięciu limitu trzeba dodać paginację zgodną z aktualnym API Amazon.
+Nie buforujemy błędów ani nie pokazujemy starego cache po nieudanym odświeżeniu.
+Brak daty lub platformy nie powoduje dopisywania zgadywanych informacji.
+
+Testy offline: `python3 -m unittest -q`. Po wdrożeniu sprawdzić `/darmowegry`
+na Discordzie, obie sekcje oraz linki odbioru.
+
 ## Gdzie działa produkcja
 
 | Element | Konfiguracja |

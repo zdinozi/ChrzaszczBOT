@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 import logging
 import os
@@ -11,7 +12,9 @@ from discord import app_commands
 from discord.ext import tasks
 
 from pepper_scraper import Deal, PepperScraperError, fetch_hottest_deals
-from epic_games import EpicGamesError, fetch_free_games
+from epic_games import fetch_free_games
+from free_games import FreeGame, GamesCache
+from prime_games import fetch_prime_games
 
 
 CHANNEL_NAME = os.getenv("DISCORD_CHANNEL", "promocje")
@@ -129,33 +132,59 @@ async def promotions_command(interaction: discord.Interaction) -> None:
     await publish_deals(interaction.followup)
 
 
-@command_tree.command(name="darmowegry", description="Pokaż gry dostępne teraz do odebrania za darmo")
+epic_cache = GamesCache()
+prime_cache = GamesCache()
+
+
+def build_game_embed(game: FreeGame) -> discord.Embed:
+    details = [
+        f"Do odebrania do <t:{int(game.ends_at.timestamp())}:F>"
+        if game.ends_at else "Termin odbioru niepodany przez źródło."
+    ]
+    if game.platform:
+        details.append(f"Platforma aktywacji: {discord.utils.escape_markdown(game.platform[:200])}")
+    if game.requires_prime:
+        details.append("Wymaga Amazon Prime.")
+    embed = discord.Embed(
+        title=game.title[:256], url=game.url, description="\n".join(details),
+        colour=discord.Colour.purple() if game.requires_prime else discord.Colour.blue(),
+    )
+    embed.set_footer(text=game.source if game.requires_prime else "Epic Games Store • Polska")
+    return embed
+
+
+async def publish_free_games(channel: discord.abc.Messageable) -> None:
+    results = await asyncio.gather(
+        epic_cache.get(fetch_free_games), prime_cache.get(fetch_prime_games),
+        return_exceptions=True,
+    )
+    providers = (
+        ("Epic Games Store", "🎮 **Gry do odebrania za darmo w Epic Games Store**"),
+        ("Amazon Prime", "🎁 **Gry do odebrania w ramach Amazon Prime**\n"
+         "Wymagana aktywna subskrypcja. Dostępność dla konta i regionu sprawdzisz na stronie oferty."),
+    )
+    for (source, heading), result in zip(providers, results):
+        if isinstance(result, Exception):
+            logger.error("Nie udało się pobrać gier: %s", source,
+                         exc_info=(type(result), result, result.__traceback__))
+            await channel.send(f"⚠️ Nie udało się pobrać gier z {source}. Spróbuj ponownie później.")
+            continue
+        if not result:
+            await channel.send(f"Obecnie brak aktywnych ofert do odebrania w {source}.")
+            continue
+        # Five bounded cards fit both the 10-embed and 6000-character limits.
+        for offset in range(0, len(result), 5):
+            await channel.send(
+                content=heading if offset == 0 else None,
+                embeds=[build_game_embed(game) for game in result[offset:offset + 5]],
+                allowed_mentions=discord.AllowedMentions.none(),
+            )
+
+
+@command_tree.command(name="darmowegry", description="Pokaż gry do odebrania w Epic Games i z subskrypcją Amazon Prime")
 async def free_games_command(interaction: discord.Interaction) -> None:
     await interaction.response.defer(thinking=True)
-    try:
-        games = await fetch_free_games()
-    except EpicGamesError:
-        logger.exception("Nie udało się pobrać darmowych gier Epic Games")
-        await interaction.followup.send("⚠️ Nie udało się pobrać gier z Epic Games. Spróbuj ponownie później.")
-        return
-    if not games:
-        await interaction.followup.send("Obecnie nie ma darmowych gier do odebrania w promocji Epic Games Store dla Polski.")
-        return
-    # Small batches also keep the combined embed text below Discord's 6000-character limit.
-    for offset in range(0, len(games), 10):
-        embeds = []
-        for game in games[offset:offset + 10]:
-            embed = discord.Embed(
-                title=game.title[:256], url=game.url,
-                description=f"Darmowa do <t:{int(game.ends_at.timestamp())}:F>",
-                colour=discord.Colour.blue(),
-            )
-            embed.set_footer(text="Epic Games Store • Polska")
-            embeds.append(embed)
-        await interaction.followup.send(
-            content="🎮 **Gry do odebrania za darmo w Epic Games Store**" if offset == 0 else None,
-            embeds=embeds,
-        )
+    await publish_free_games(interaction.followup)
 
 
 if __name__ == "__main__":
