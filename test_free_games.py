@@ -106,13 +106,35 @@ class PaginationTest(unittest.IsolatedAsyncioTestCase):
         await view.previous.callback(interaction)
         self.assertEqual(view.page, 0)
         interaction.followup.send.assert_not_called()
-        view.message = AsyncMock()
-        await view.on_timeout()
-        self.assertTrue(view.previous.disabled)
-        self.assertTrue(view.next.disabled)
-        self.assertIn("Nawigacja wygasła", view.message.edit.call_args.kwargs["content"])
-        await view.next.callback(interaction)
-        self.assertEqual(view.page, 0)
+        self.assertIsNone(view.timeout)
+
+    async def test_other_messages_do_not_break_navigation(self):
+        from types import SimpleNamespace
+        from discord.ui.view import ViewStore
+
+        view = main.FreeGamesView([("Epic", []), ("Prime", [])], [])
+        self.addCleanup(view.stop)
+        store = ViewStore(main.client._connection)
+        store.add_view(view, message_id=123)
+        # A conversation and another paginated response use separate message IDs.
+        main.client._connection.parse_message_create({
+            "id": "124", "channel_id": "456", "author": {"id": "789", "username": "User"},
+            "content": "Nowa wiadomość", "timestamp": "2026-10-10T20:00:00+00:00",
+            "edited_timestamp": None, "type": 0, "attachments": [], "embeds": [],
+        })
+        other_view = main.FreeGamesView([("Other", []), ("Other 2", [])], [])
+        self.addCleanup(other_view.stop)
+        store.add_view(other_view, message_id=125)
+        interaction = AsyncMock()
+        interaction.message = SimpleNamespace(id=123)
+        interaction.data = {"component_type": 2, "custom_id": view.next.custom_id}
+        interaction.user.id = 789
+        store.dispatch_view(2, view.next.custom_id, interaction)
+        await asyncio.sleep(0)
+        await asyncio.sleep(0)
+        self.assertEqual(view.page, 1)
+        self.assertEqual(other_view.page, 0)
+        interaction.response.edit_message.assert_awaited_once()
 
     async def test_single_page_has_no_buttons(self):
         channel = AsyncMock()

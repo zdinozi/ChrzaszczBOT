@@ -175,30 +175,28 @@ def build_game_embed(game: FreeGame) -> discord.Embed:
 
 class FreeGamesView(discord.ui.View):
     def __init__(self, pages: list[tuple[str, list[discord.Embed]]], notices: list[str]):
-        super().__init__(timeout=300)
+        # Keep navigation available while the bot is running, even during long conversations.
+        super().__init__(timeout=None)
         self.pages = pages
         self.notices = notices
         self.page = 0
         self.message = None
         self.lock = asyncio.Lock()
-        self.expired = False
         self.update_buttons()
 
     def update_buttons(self) -> None:
-        self.previous.disabled = self.expired or self.page == 0
-        self.next.disabled = self.expired or self.page == len(self.pages) - 1
+        self.previous.disabled = self.page == 0
+        self.next.disabled = self.page == len(self.pages) - 1
 
     def message_content(self) -> str:
         heading, _ = self.pages[self.page]
-        hint = "Nawigacja wygasła — wywołaj ponownie /darmowegry." if self.expired else ""
         return "\n".join(text for text in (
-            heading, f"**Strona {self.page + 1}/{len(self.pages)}**", *self.notices, hint,
+            heading, f"**Strona {self.page + 1}/{len(self.pages)}**", *self.notices,
         ) if text)
 
     async def move(self, interaction: discord.Interaction, offset: int) -> None:
         async with self.lock:
-            if not self.expired:
-                self.page = max(0, min(len(self.pages) - 1, self.page + offset))
+            self.page = max(0, min(len(self.pages) - 1, self.page + offset))
             self.update_buttons()
             await interaction.response.edit_message(
                 content=self.message_content(), embeds=self.pages[self.page][1], view=self,
@@ -213,15 +211,6 @@ class FreeGamesView(discord.ui.View):
     async def next(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         await self.move(interaction, 1)
 
-    async def on_timeout(self) -> None:
-        async with self.lock:
-            self.expired = True
-            self.update_buttons()
-            if self.message is not None:
-                try:
-                    await self.message.edit(content=self.message_content(), view=self)
-                except discord.HTTPException:
-                    logger.warning("Nie udało się wyłączyć nawigacji gier po wygaśnięciu")
 
 
 async def publish_free_games(channel: discord.Webhook) -> None:

@@ -71,7 +71,8 @@ Nie wymaga konta Amazon w konfiguracji bota ani dodatkowych zależności.
   następnie zapytanie GraphQL o kolekcję `FREE_GAMES`. Każde żądanie ma timeout
   20 sekund. Cookies i token pozostają w pamięci, nie są zapisywane na dysk.
 - `main.py`: jedna wiadomość ze stronami po pięć kart, przyciskami Poprzednia/Następna
-  i niezależnymi komunikatami błędów. Nawigacja wygasa po pięciu minutach bezczynności.
+  i niezależnymi komunikatami błędów. Nawigacja nie ma limitu bezczynności i działa do restartu bota,
+  niezależnie od kolejnych wiadomości na kanale.
 - `test_prime_games.py`, `test_free_games.py`: testy parsera, sesji, cache i publikacji.
   `tests/fixtures/prime_games.json` to publiczna odpowiedź katalogu z 10.10.2026,
   ograniczona do pól ofert; nie zawiera cookies, CSRF ani danych konta.
