@@ -1,0 +1,47 @@
+name: Deploy to Mikrus
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mikrus-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Test
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install -r requirements.txt
+          .venv/bin/python -m unittest -q
+          .venv/bin/python -m py_compile main.py pepper_scraper.py
+          bash -n deploy/*.sh
+      - name: Deploy over SSH
+        env:
+          DEPLOY_KEY: ${{ secrets.MIKRUS_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_KEY" || { echo 'Missing MIKRUS_DEPLOY_KEY secret'; exit 1; }
+          key_file="$(mktemp)"
+          trap 'rm -f "$key_file"' EXIT
+          chmod 600 "$key_file"
+          printf '%s\n' "$DEPLOY_KEY" > "$key_file"
+          unset DEPLOY_KEY
+          ssh -i "$key_file" -p 10202 \
+            -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o ConnectTimeout=20 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile=deploy/mikrus_known_hosts \
+            root@wanda202.mikrus.xyz deploy

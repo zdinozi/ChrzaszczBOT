@@ -7,6 +7,11 @@ if [[ "${EUID}" -ne 0 ]]; then
 fi
 
 readonly REPO_DIR="/opt/ChrzaszczBOT"
+readonly DEPLOY_MODE="${DEPLOY_MODE:-github}"
+if [[ "${DEPLOY_MODE}" != github && "${DEPLOY_MODE}" != timer ]]; then
+    echo "DEPLOY_MODE musi mieć wartość github lub timer"
+    exit 1
+fi
 
 if [[ ! -d "${REPO_DIR}/.git" ]]; then
     echo "Brak repozytorium w ${REPO_DIR}"
@@ -38,13 +43,17 @@ chmod 0600 /etc/chrzaszczbot.env
 
 install -m 0644 "${REPO_DIR}/deploy/chrzaszczbot.service" /etc/systemd/system/chrzaszczbot.service
 install -m 0755 "${REPO_DIR}/deploy/chrzaszczbot-update.sh" /usr/local/sbin/chrzaszczbot-update
+install -m 0755 "${REPO_DIR}/deploy/chrzaszczbot-deploy.sh" /usr/local/sbin/chrzaszczbot-deploy
 install -m 0644 "${REPO_DIR}/deploy/chrzaszczbot-update.service" /etc/systemd/system/chrzaszczbot-update.service
 install -m 0644 "${REPO_DIR}/deploy/chrzaszczbot-update.timer" /etc/systemd/system/chrzaszczbot-update.timer
 
 systemctl daemon-reload
 systemctl enable chrzaszczbot.service
 systemctl restart chrzaszczbot.service
-systemctl enable --now chrzaszczbot-update.timer
-
-echo "Bot i timer zostały uruchomione. Następna aktualizacja:"
-systemctl list-timers chrzaszczbot-update.timer --no-pager
+if [[ "${DEPLOY_MODE}" == timer ]]; then
+    systemctl enable --now chrzaszczbot-update.timer
+    systemctl list-timers chrzaszczbot-update.timer --no-pager
+else
+    systemctl disable --now chrzaszczbot-update.timer
+    echo "Bot uruchomiony. Wdrażanie przez GitHub Actions; timer wyłączony."
+fi

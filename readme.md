@@ -33,9 +33,15 @@ Bot musi działać bez przerwy, aby scheduler wykonał publikację o 18:00.
 
 ## Automatyczne aktualizacje na Mikrusie
 
-Repozytorium zawiera timer `systemd`, który co 5 minut sprawdza gałąź `main` na
-GitHubie. Nowa wersja jest instalowana i restartuje bota dopiero po pomyślnym
-zainstalowaniu zależności oraz przejściu testów.
+Każdy push na `main` uruchamia workflow **Deploy to Mikrus** w GitHub Actions.
+Po testach GitHub łączy się przez SSH i uruchamia aktualizator na serwerze.
+Aktualizator pobiera najnowszy `main`, ponownie sprawdza zależności i testy,
+a następnie restartuje bota. Przy kilku szybkich pushach wdrożenie może objąć
+kilka commitów naraz. Wdrożenia nie są wykonywane równolegle.
+
+Wynik jest widoczny w zakładce **Actions** repozytorium. Workflow można też
+uruchomić ręcznie przez **Run workflow** dla `main`.
+Token Discorda pozostaje w `/etc/chrzaszczbot.env` na serwerze.
 
 ### Pierwsza instalacja na Mikrusie 2.1
 
@@ -80,21 +86,48 @@ Jeśli bot działa na starej maszynie, zatrzymaj tam usługę przed uruchomienie
 nowej, aby uniknąć podwójnych publikacji.
 
 Uruchom instalator, który tworzy `.venv`, instaluje zależności, wykonuje testy
-i uruchamia lub restartuje bota oraz włącza timer aktualizacji:
+i uruchamia lub restartuje bota. Domyślnie wybiera GitHub Actions i wyłącza timer:
 
 ```bash
 cd /opt/ChrzaszczBOT
 sudo bash deploy/install-auto-update.sh
 ```
 
-Stan timera i logi aktualizacji:
+### Dostęp GitHub Actions do serwera
 
-```bash
-systemctl status chrzaszczbot-update.timer
-journalctl -u chrzaszczbot-update.service --since today
+Workflow wymaga sekretu repozytorium `MIKRUS_DEPLOY_KEY` zawierającego osobny
+prywatny klucz SSH bez hasła. Dodaj go w **Settings → Secrets and variables →
+Actions**. Klucza prywatnego nie zapisuj w repozytorium.
+Odpowiadający mu klucz publiczny dodaj do `/root/.ssh/authorized_keys` na
+Mikrusie, poprzedzając go ograniczeniem:
+
+```text
+restrict,command="/usr/local/sbin/chrzaszczbot-deploy" ssh-ed25519 KLUCZ_PUBLICZNY github-actions-chrzaszczbot
 ```
 
-Od tej chwili wystarczy wysłać zmiany do `main` na GitHubie. Mikrus wdroży je
-automatycznie w ciągu około 5 minut. Aktualizator celowo przerywa pracę, jeśli
+Ten klucz może uruchamiać wyłącznie aktualizator; nie pozwala na interaktywną
+powłokę ani przekierowywanie portów. Skrypt ignoruje polecenie przesłane przez SSH.
+Plik `deploy/mikrus_known_hosts` zawiera przypięty publiczny klucz hosta.
+Przy zmianie serwera zaktualizuj host/port workflow i klucz hosta po jego
+niezależnej weryfikacji.
+
+### Diagnostyka i ręczne wdrożenie
+
+```bash
+systemctl status chrzaszczbot.service
+journalctl -u chrzaszczbot-update.service --since today
+sudo /usr/local/sbin/chrzaszczbot-deploy
+```
+
+Aktualizator celowo przerywa pracę, jeśli
 repozytorium na serwerze zawiera lokalne zmiany albo historia nie pozwala na
 bezpieczną aktualizację `fast-forward`.
+
+Alternatywnie można włączyć wcześniejszy tryb odpytywania co 5 minut:
+
+```bash
+sudo env DEPLOY_MODE=timer bash deploy/install-auto-update.sh
+```
+
+W tym trybie wyłącz workflow w GitHub Actions, aby nie uruchamiać dwóch
+mechanizmów wdrożenia jednocześnie.
