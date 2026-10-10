@@ -17,7 +17,8 @@ tytuł, link, a jeśli są dostępne — cenę, temperaturę i zdjęcie.
 - Bot musi działać w chwili zaplanowanej publikacji. Nie ma mechanizmu
   odtwarzania publikacji pominiętych podczas przerwy w działaniu.
 
-Projekt nie używa bazy danych, Dockera ani własnego serwera WWW.
+Projekt używa lokalnego pliku SQLite do historii powiadomień o grach.
+Nie używa Dockera ani własnego serwera WWW.
 Bot łączy się z Discordem i pobiera stronę Pepper przez połączenia wychodzące.
 
 ## Jak działa kod
@@ -84,6 +85,47 @@ Brak daty lub platformy nie powoduje dopisywania zgadywanych informacji.
 
 Testy offline: `python3 -m unittest -q`. Po wdrożeniu sprawdzić `/darmowegry`
 na Discordzie, obie sekcje oraz linki odbioru.
+
+## Codzienne powiadomienia o nowych grach
+
+Osobna pętla `daily_games` uruchamia się o 18:00 Europe/Warsaw (ze zmianą czasu)
+i publikuje na `#tvgry`. Nie zmienia kanału codziennych okazji Pepper.
+Opcjonalne `DISCORD_GAMES_CHANNEL_ID` wybiera kanał jednoznacznie; bez ID nazwa
+`DISCORD_GAMES_CHANNEL` (domyślnie `tvgry`) musi pasować do jednego kanału.
+
+`game_notifications.py` przechowuje historię dostarczenia w SQLite, domyślnie
+`data/sent_games.sqlite3` obok kodu. Ścieżkę można zmienić `GAMES_STATE_PATH`.
+Klucz to kanał + źródło + stabilne ID oferty (Epic: namespace i ID; Amazon: ID
+pozycji). Zmiana tytułu lub terminu nie wywołuje ponownego powiadomienia.
+Historia nieobecnej oferty jest usuwana 30 dni po jej wygaśnięciu. Dla ofert
+bez daty końca wymagamy 90 dni od pierwszej nieobecności w poprawnym odczycie.
+Aktualne oferty odświeżają datę końca i zerują nieobecność przed sprzątaniem.
+Sprzątanie obejmuje tylko dany kanał i poprawnie pobrane źródła; błędy pobierania
+nie inicjują nieobecności i nie usuwają wpisów. Po usunięciu starego wpisu
+powrót oferty powoduje nową publikację.
+
+Kolumny `ends_at` i `missing_since` są dodawane automatycznie do starej bazy,
+bez kasowania zapisów. Starsze wpisy bez dat są traktowane zachowawczo jako
+bezterminowe do kolejnego poprawnego odczytu. SQLite ponownie wykorzystuje
+wolne strony po DELETE; nie wykonujemy kosztownego codziennego VACUUM.
+
+Pierwszy przebieg wysyła wszystkie aktywne oferty. Następne pobierają świeże
+katalogi (bez cache komendy) i publikują jedynie niewysłane pozycje. Brak
+nowych ofert oznacza ciszę. Komenda ręczna nie dotyka historii. Publikacja
+używa jednej wiadomości i przycisków, jak `/darmowegry`.
+
+Historia jest zatwierdzana po wysyłce na Discord. Błąd wysyłki pozwala na
+ponowienie przy następnym przebiegu; błąd jednego katalogu nie kasuje jego
+historii i nie blokuje drugiego. Błędy są logowane, pętla działa dalej kolejnego
+dnia. Uszkodzona baza nie jest automatycznie resetowana. Awaria procesu między
+potwierdzeniem wysyłki a zatwierdzeniem bazy może spowodować powtórkę; zapis
+Discorda i SQLite nie jest jedną transakcją. Obsługujemy jeden proces bota.
+
+Baza jest ignorowana przez Git i nie znika przy standardowym wdrożeniu.
+Wymaga kopii zapasowej przy migracji; jej usunięcie resetuje historię.
+Bot musi działać o 18:00, bez nadrabiania pominiętego uruchomienia po starcie.
+Testy `test_game_notifications.py` sprawdzają m.in. restart, brak nowości,
+częściową awarię źródeł, awarię wysyłki i uszkodzenie bazy.
 
 ## Gdzie działa produkcja
 

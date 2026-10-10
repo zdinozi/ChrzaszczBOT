@@ -7,6 +7,7 @@ token.txt
 
 # Temporary files and downloaded archives
 temp/
+data/
 
 # Local documentation and private notes
 docs/

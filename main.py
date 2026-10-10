@@ -14,10 +14,16 @@ from discord.ext import tasks
 from pepper_scraper import Deal, PepperScraperError, fetch_hottest_deals
 from epic_games import fetch_free_games
 from free_games import FreeGame, GamesCache
+from game_notifications import GameNotifications
 from prime_games import fetch_prime_games
 
 
 CHANNEL_NAME = os.getenv("DISCORD_CHANNEL", "promocje")
+GAMES_CHANNEL_NAME = os.getenv("DISCORD_GAMES_CHANNEL", "tvgry")
+GAMES_STATE_PATH = Path(os.getenv(
+    "GAMES_STATE_PATH", str(Path(__file__).parent / "data" / "sent_games.sqlite3"),
+))
+game_notifications = GameNotifications(GAMES_STATE_PATH)
 WARSAW = ZoneInfo("Europe/Warsaw")
 POST_TIME = dt.time(hour=18, minute=0, tzinfo=WARSAW)
 
@@ -56,6 +62,18 @@ def find_channel() -> discord.TextChannel | None:
         and item.name.casefold() == CHANNEL_NAME.casefold(),
         client.get_all_channels(),
     )
+
+
+def find_games_channel() -> discord.TextChannel | None:
+    channel_id = os.getenv("DISCORD_GAMES_CHANNEL_ID")
+    if channel_id:
+        channel = client.get_channel(int(channel_id)) if channel_id.isdigit() else None
+        return channel if isinstance(channel, discord.TextChannel) else None
+    matches = [channel for channel in client.get_all_channels()
+               if isinstance(channel, discord.TextChannel)
+               and channel.name.casefold() == GAMES_CHANNEL_NAME.casefold()]
+    # Do not guess a server if multiple channels have the same name.
+    return matches[0] if len(matches) == 1 else None
 
 
 def build_embeds(deals: list[Deal]) -> list[discord.Embed]:
@@ -124,6 +142,8 @@ async def on_ready() -> None:
         logger.info("Zarejestrowano łącznie %d komend aplikacji", total_synced)
     if not daily_deals.is_running():
         daily_deals.start()
+    if not daily_games.is_running():
+        daily_games.start()
 
 
 @command_tree.command(name="promocje", description="Pokaż 10 najgorętszych okazji z Pepper.pl")
@@ -228,6 +248,13 @@ async def publish_free_games(channel: discord.Webhook) -> None:
         # Five bounded cards fit both the 10-embed and 6000-character limits.
         for offset in range(0, len(result), 5):
             pages.append((heading, [build_game_embed(game) for game in result[offset:offset + 5]]))
+    await send_game_pages(channel, pages, notices, webhook=True)
+
+
+async def send_game_pages(
+    channel, pages: list[tuple[str, list[discord.Embed]]], notices: list[str],
+    *, webhook: bool = False,
+) -> None:
     if not pages:
         await channel.send("\n".join(notices))
         return
@@ -237,7 +264,7 @@ async def publish_free_games(channel: discord.Webhook) -> None:
         return
     view = FreeGamesView(pages, notices)
     view.message = await channel.send(
-        content=view.message_content(), embeds=pages[0][1], view=view, wait=True,
+        content=view.message_content(), embeds=pages[0][1], view=view, **({"wait": True} if webhook else {}),
         allowed_mentions=discord.AllowedMentions.none(),
     )
 
@@ -246,6 +273,55 @@ async def publish_free_games(channel: discord.Webhook) -> None:
 async def free_games_command(interaction: discord.Interaction) -> None:
     await interaction.response.defer(thinking=True)
     await publish_free_games(interaction.followup)
+
+
+async def publish_new_games(channel: discord.TextChannel) -> None:
+    # Scheduled checks always fetch fresh data, independent of the command cache.
+    results = await asyncio.gather(fetch_free_games(), fetch_prime_games(), return_exceptions=True)
+    games = []
+    successful_sources = set()
+    for source, result in zip(("Epic Games Store", "Amazon Prime"), results):
+        if isinstance(result, Exception):
+            logger.error("Codzienne gry: błąd źródła %s", source,
+                         exc_info=(type(result), result, result.__traceback__))
+        else:
+            successful_sources.add(source)
+            games.extend(result)
+
+    async def send_new(new: list[FreeGame]) -> None:
+        pages = []
+        for source in dict.fromkeys(game.source for game in new):
+            source_games = [game for game in new if game.source == source]
+            heading = f"🎮 **Nowe gry do odebrania — {source}**"
+            if any(game.requires_prime for game in source_games):
+                heading += ("\nWymagana aktywna subskrypcja Amazon Prime. "
+                            "Dostępność dla konta i regionu sprawdzisz na stronie oferty.")
+            for offset in range(0, len(source_games), 5):
+                pages.append((heading, [build_game_embed(g) for g in source_games[offset:offset + 5]]))
+        await send_game_pages(channel, pages, [])
+
+    count = await game_notifications.publish_new(
+        channel.id, games, send_new, successful_sources=successful_sources,
+    )
+    logger.info("Codzienne gry: wysłano %d nowych ofert na kanał %s", count, channel.id)
+
+
+@tasks.loop(time=POST_TIME)
+async def daily_games() -> None:
+    channel = find_games_channel()
+    if channel is None:
+        logger.error("Brak jednoznacznego kanału #%s; ustaw DISCORD_GAMES_CHANNEL_ID", GAMES_CHANNEL_NAME)
+        return
+    try:
+        await publish_new_games(channel)
+    except Exception:
+        # A failed delivery or database error must not stop tomorrow's schedule.
+        logger.exception("Nie udało się opublikować nowych gier; historia nie jest resetowana")
+
+
+@daily_games.before_loop
+async def before_daily_games() -> None:
+    await client.wait_until_ready()
 
 
 if __name__ == "__main__":

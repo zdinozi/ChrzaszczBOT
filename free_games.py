@@ -15,6 +15,7 @@ class FreeGame:
     source: str = "Epic Games Store"
     platform: str | None = None
     requires_prime: bool = False
+    offer_id: str | None = None
 
 
 class GamesCache:

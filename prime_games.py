@@ -82,7 +82,7 @@ def parse_prime_games(payload: dict, now: dt.datetime | None = None) -> list[Fre
                 title=title.strip(), url=PRIME_HOME + "dp/" + quote(item_id, safe=""),
                 ends_at=None if None in ends else max(ends),
                 source="Amazon Prime", platform=", ".join(platforms) or None,
-                requires_prime=True,
+                requires_prime=True, offer_id=item_id,
             ))
             seen.add(item_id)
         return sorted(games, key=lambda g: (

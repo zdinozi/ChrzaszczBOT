@@ -54,7 +54,8 @@ def parse_free_games(payload: dict, now: dt.datetime | None = None) -> list[Free
                 url = "https://store.epicgames.com/pl/p/" + quote(slug, safe="/-")
             else:
                 url = "https://store.epicgames.com/pl/free-games"
-            games.append(FreeGame(item["title"], url, max(ends)))
+            games.append(FreeGame(item["title"], url, max(ends),
+                                  offer_id=json.dumps(key)))
             seen.add(key)
         return sorted(games, key=lambda game: (game.ends_at, game.title.casefold()))
     except (KeyError, TypeError, ValueError, AttributeError) as error:

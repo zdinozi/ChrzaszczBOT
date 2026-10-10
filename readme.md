@@ -46,7 +46,7 @@ sesji (cookies i CSRF), tworzonej wyłącznie w pamięci na czas pobrania katalo
 Integracja używa wewnętrznego GraphQL publicznej strony, więc zmiany po stronie
 Amazon mogą wymagać aktualizacji modułu `prime_games.py`.
 
-Oba źródła pobierane są równolegle na żądanie komendy, z osobnym cache na 15 minut.
+Przy ręcznej komendzie oba źródła pobierane są równolegle, z osobnym cache na 15 minut.
 Cache znika po restarcie; wygasłe oferty są filtrowane również przy odczycie cache.
 Awaria jednego źródła nie blokuje wyników drugiego. Błąd nie jest traktowany jako
 brak ofert ani zapisywany w cache. Wyniki trafiają do jednej wiadomości, po pięć kart na stronę. Przyciski
@@ -57,6 +57,40 @@ Bot musi być dodany do serwera z uprawnieniem `applications.commands`.
 Komenda jest synchronizowana bezpośrednio na każdym serwerze po starcie bota,
 dzięki czemu powinna pojawić się w Discordzie od razu.
 Bot musi działać bez przerwy, aby scheduler wykonał publikację o 18:00.
+
+## Codzienne nowe gry na #tvgry
+
+Codziennie o **18:00 Europe/Warsaw** bot pobiera świeże oferty Epic i Amazon
+Prime i wysyła na **#tvgry** tylko oferty, których wcześniej tam nie opublikował.
+Pierwsze uruchomienie harmonogramu publikuje wszystkie aktualne oferty. Brak
+nowości oznacza brak wiadomości. Publikacja używa tej samej paginacji co komenda.
+Ręczne `/darmowegry` nadal pokazuje pełną listę i nie zmienia historii powiadomień.
+
+Historia jest zapisywana w SQLite w `data/sent_games.sqlite3`, osobno dla kanału,
+źródła i identyfikatora oferty. Zmiana tytułu, daty końca, chwilowy brak oferty
+lub restart nie powodują ponownej wysyłki. Historię nieobecnej oferty usuwamy 30 dni po jej wygaśnięciu. Przy braku terminu
+usuwamy ją po 90 dniach od pierwszego stwierdzonego braku w poprawnie pobranym
+katalogu. Powrót aktywnej oferty zeruje licznik nieobecności, a przedłużenie
+promocji aktualizuje datę końca przed sprzątaniem. Błąd źródła nie rozpoczyna
+nieobecności i nie usuwa jego historii. Po usunięciu wpisu powracająca oferta
+może zostać ogłoszona ponownie. SQLite wykorzystuje zwolnione miejsce przy
+kolejnych zapisach; plik nie musi od razu zmniejszać rozmiaru na dysku.
+
+Zapis następuje po potwierdzonej wysyłce. Awaria źródła nie blokuje drugiego,
+a błędy trafiają do logów. Uszkodzona historia zatrzymuje publikację zamiast
+resetować listę. Przerwanie procesu pomiędzy wysyłką a zapisem może spowodować
+powtórzenie wiadomości przy kolejnym sprawdzeniu.
+
+Opcjonalna konfiguracja:
+- `DISCORD_GAMES_CHANNEL` — domyślnie `tvgry`, niezależnie od kanału Pepper.
+- `DISCORD_GAMES_CHANNEL_ID` — ID kanału gier; ma pierwszeństwo przed nazwą.
+  Przy kilku kanałach `tvgry` wymagane jest ID, aby bot nie zgadywał serwera.
+- `GAMES_STATE_PATH` — inna ścieżka do pliku SQLite.
+
+Katalog `data/` jest ignorowany przez Git i zachowywany przy standardowym
+wdrożeniu. Należy go uwzględnić w kopiach zapasowych i przenosinach serwera;
+usunięcie bazy spowoduje ponowną publikację wszystkich aktualnych ofert.
+Bot musi działać o 18:00; pominięta publikacja nie jest nadrabiana po restarcie.
 
 ## Automatyczne aktualizacje na Mikrusie
 
